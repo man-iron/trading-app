@@ -1,10 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import appReducer, { initialState } from '../reducer';
-import { appInitRequest, appInitSuccess, appInitFailure } from '../actions';
+import {
+  appInitRequest,
+  appInitSuccess,
+  appInitFailure,
+  toggleTheme,
+} from '../actions';
 import {
   APP_INIT_REQUEST,
   APP_INIT_SUCCESS,
   APP_INIT_FAILURE,
+  APP_TOGGLE_THEME,
 } from '../../../constants/actionTypes';
 
 const initResponse = {
@@ -38,6 +44,10 @@ describe('app action creators', () => {
       payload: 'boom',
     });
   });
+
+  it('toggleTheme creates the toggle action', () => {
+    expect(toggleTheme()).toEqual({ type: APP_TOGGLE_THEME });
+  });
 });
 
 describe('app reducer', () => {
@@ -51,6 +61,7 @@ describe('app reducer', () => {
       error: null,
       userData: null,
       eodDates: [],
+      themeMode: 'dark',
     });
   });
 
@@ -69,7 +80,21 @@ describe('app reducer', () => {
       error: null,
       userData: initResponse.userData,
       eodDates: initResponse.eodDates,
+      themeMode: 'dark',
     });
+  });
+
+  it('APP_TOGGLE_THEME flips dark -> light -> dark', () => {
+    const light = appReducer(initialState, toggleTheme());
+    expect(light.themeMode).toBe('light');
+    const dark = appReducer(light, toggleTheme());
+    expect(dark.themeMode).toBe('dark');
+  });
+
+  it('APP_TOGGLE_THEME leaves the rest of the state untouched', () => {
+    const ready = appReducer(initialState, appInitSuccess(initResponse));
+    const toggled = appReducer(ready, toggleTheme());
+    expect(toggled).toEqual({ ...ready, themeMode: 'light' });
   });
 
   it('APP_INIT_SUCCESS does not store menuData on the app branch', () => {

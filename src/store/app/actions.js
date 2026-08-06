@@ -2,6 +2,7 @@ import {
   APP_INIT_REQUEST,
   APP_INIT_SUCCESS,
   APP_INIT_FAILURE,
+  APP_TOGGLE_THEME,
 } from '../../constants/actionTypes';
 
 /**
@@ -29,3 +30,9 @@ export const appInitFailure = (error) => ({
   type: APP_INIT_FAILURE,
   payload: error,
 });
+
+/**
+ * Flip the UI theme between dark and light.
+ * @returns {{ type: string }}
+ */
+export const toggleTheme = () => ({ type: APP_TOGGLE_THEME });

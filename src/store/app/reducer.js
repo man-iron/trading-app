@@ -2,6 +2,7 @@ import {
   APP_INIT_REQUEST,
   APP_INIT_SUCCESS,
   APP_INIT_FAILURE,
+  APP_TOGGLE_THEME,
 } from '../../constants/actionTypes';
 
 /**
@@ -10,6 +11,7 @@ import {
  * @property {string|null} error
  * @property {import('../../types').UserData|null} userData
  * @property {string[]} eodDates
+ * @property {'dark'|'light'} themeMode
  */
 
 /** @type {AppState} */
@@ -18,6 +20,7 @@ export const initialState = {
   error: null,
   userData: null,
   eodDates: [],
+  themeMode: 'dark',
 };
 
 /**
@@ -47,6 +50,11 @@ export default function appReducer(state = initialState, action = {}) {
         ...state,
         status: 'error',
         error: action.payload,
+      };
+    case APP_TOGGLE_THEME:
+      return {
+        ...state,
+        themeMode: state.themeMode === 'dark' ? 'light' : 'dark',
       };
     default:
       return state;

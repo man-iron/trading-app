@@ -6,6 +6,7 @@ import {
   selectEodDates,
   selectIsAppLoading,
   selectIsAppReady,
+  selectThemeMode,
 } from '../selectors';
 
 const userData = {
@@ -46,6 +47,11 @@ describe('app selectors', () => {
     expect(selectIsAppLoading(makeState({ status: 'idle' }))).toBe(false);
     expect(selectIsAppLoading(makeState({ status: 'ready' }))).toBe(false);
     expect(selectIsAppLoading(makeState({ status: 'error' }))).toBe(false);
+  });
+
+  it('selectThemeMode returns the theme mode', () => {
+    expect(selectThemeMode(makeState({ themeMode: 'dark' }))).toBe('dark');
+    expect(selectThemeMode(makeState({ themeMode: 'light' }))).toBe('light');
   });
 
   it('selectIsAppReady is true only when ready', () => {

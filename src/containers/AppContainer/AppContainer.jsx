@@ -3,13 +3,19 @@ import { connect } from 'react-redux';
 import withStyles from 'react-jss';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import IconButton from '@mui/material/IconButton';
 import Skeleton from '@mui/material/Skeleton';
+import Tooltip from '@mui/material/Tooltip';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 
 import initApp from '../../store/initThunk';
+import { toggleTheme } from '../../store/app/actions';
 import {
   selectAppStatus,
   selectAppError,
   selectUserData,
+  selectThemeMode,
 } from '../../store/app/selectors';
 import { selectSelectedReportNode } from '../../store/menu/selectors';
 import { TRANSPORTS } from '../../constants/reportConstants';
@@ -45,7 +51,9 @@ import styles from '../../styles/components/AppContainer.styles';
  * @param {import('../../types').UserData|null} props.userData Current user.
  * @param {import('../../types').MenuNode|null} props.selectedNode Selected
  *   report node from the menu tree (null when nothing is selected).
+ * @param {'dark'|'light'} props.themeMode Current UI theme mode.
  * @param {() => void} props.onInit Dispatches the init thunk.
+ * @param {() => void} props.onToggleTheme Flips the UI theme dark <-> light.
  */
 class AppContainer extends Component {
   constructor(props) {
@@ -155,7 +163,8 @@ class AppContainer extends Component {
    * @returns {import('react').ReactNode}
    */
   render() {
-    const { classes, status, userData, selectedNode } = this.props;
+    const { classes, status, userData, selectedNode, themeMode, onToggleTheme } =
+      this.props;
 
     if (status === 'idle' || status === 'loading') {
       return this.renderLoading();
@@ -183,6 +192,31 @@ class AppContainer extends Component {
                 variant="outlined"
               />
             )}
+            <Tooltip
+              title={
+                themeMode === 'dark'
+                  ? 'Switch to light theme'
+                  : 'Switch to dark theme'
+              }
+            >
+              <IconButton
+                size="small"
+                color="inherit"
+                onClick={onToggleTheme}
+                aria-label={
+                  themeMode === 'dark'
+                    ? 'Switch to light theme'
+                    : 'Switch to dark theme'
+                }
+                data-testid="theme-toggle"
+              >
+                {themeMode === 'dark' ? (
+                  <LightModeIcon fontSize="inherit" />
+                ) : (
+                  <DarkModeIcon fontSize="inherit" />
+                )}
+              </IconButton>
+            </Tooltip>
           </div>
         </header>
         <div className={classes.body}>
@@ -213,10 +247,12 @@ const mapStateToProps = (state) => ({
   error: selectAppError(state),
   userData: selectUserData(state),
   selectedNode: selectSelectedReportNode(state),
+  themeMode: selectThemeMode(state),
 });
 
 const mapDispatchToProps = {
   onInit: initApp,
+  onToggleTheme: toggleTheme,
 };
 
 export default connect(

@@ -1,20 +1,28 @@
 /**
  * Shared theming for the retro trading terminal.
  *
- * Exports two theme objects built from one token set:
- * - `muiTheme`  — MUI v5 theme (dark mode) consumed by `@mui/material`'s
+ * Two color-token sets (dark and light) feed two theme factories:
+ * - `getMuiTheme(mode)` — MUI v5 theme consumed by `@mui/material`'s
  *   `ThemeProvider` for all MUI widgets.
- * - `jssTheme`  — plain token object consumed by `react-jss`'s `ThemeProvider`
- *   for the custom JSS style files in `src/styles/components/`.
+ * - `getJssTheme(mode)` — plain token object consumed by `react-jss`'s
+ *   `ThemeProvider` for the custom JSS style files in
+ *   `src/styles/components/`.
  *
- * Palette (per architecture contract): near-black background `#0d1117`,
+ * Dark palette (per architecture contract): near-black background `#0d1117`,
  * panel `#161b22`, up-green `#00c805`, down-red `#ff5000`, amber accent
- * `#ffb000`, monospace numerals for data cells.
+ * `#ffb000`, monospace numerals for data cells. The light palette mirrors the
+ * same token shape with paper-terminal equivalents.
+ *
+ * The legacy `colors`, `muiTheme` and `jssTheme` exports remain the dark
+ * variants so existing imports (tests, stories) keep working.
  */
-import { createTheme } from '@mui/material/styles';
+import { createTheme, type Theme } from '@mui/material/styles';
 
-/** Single source of truth for all color tokens. */
-export const colors = {
+/** The two supported UI themes. */
+export type ThemeMode = 'dark' | 'light';
+
+/** Dark color tokens — the original terminal palette. */
+export const darkColors = {
   /** App background — near black. */
   background: '#0d1117',
   /** Panel / surface background. */
@@ -35,6 +43,33 @@ export const colors = {
   textSecondary: '#8b949e',
 } as const;
 
+/** Light color tokens — same shape, paper-terminal equivalents. */
+export const lightColors = {
+  background: '#f6f8fa',
+  panel: '#ffffff',
+  panelRaised: '#eaeef2',
+  border: '#d0d7de',
+  up: '#0f7b0f',
+  down: '#cf3c00',
+  accent: '#9a6700',
+  text: '#1f2328',
+  textSecondary: '#57606a',
+} as const;
+
+/** Color token shape shared by both modes. */
+export type ThemeColors = typeof darkColors | typeof lightColors;
+
+/** Color tokens for a given mode. */
+export function getColors(mode: ThemeMode): ThemeColors {
+  return mode === 'light' ? lightColors : darkColors;
+}
+
+/**
+ * Dark color tokens under the historical name.
+ * @deprecated Prefer `getColors(mode)`; kept for existing imports.
+ */
+export const colors = darkColors;
+
 /** Font stacks: monospace for data cells, system sans for chrome. */
 export const fonts = {
   mono: "'JetBrains Mono', 'Consolas', monospace",
@@ -42,87 +77,96 @@ export const fonts = {
 } as const;
 
 /**
- * MUI v5 theme — dark trading-terminal look for all MUI widgets.
+ * Build the MUI v5 theme for a mode — trading-terminal look for all MUI
+ * widgets in both dark and light variants.
  */
-export const muiTheme = createTheme({
-  palette: {
-    mode: 'dark',
-    background: {
-      default: colors.background,
-      paper: colors.panel,
+export function getMuiTheme(mode: ThemeMode): Theme {
+  const c = getColors(mode);
+  return createTheme({
+    palette: {
+      mode,
+      background: {
+        default: c.background,
+        paper: c.panel,
+      },
+      primary: { main: c.accent },
+      secondary: { main: c.up },
+      success: { main: c.up },
+      error: { main: c.down },
+      warning: { main: c.accent },
+      text: {
+        primary: c.text,
+        secondary: c.textSecondary,
+      },
+      divider: c.border,
     },
-    primary: { main: colors.accent },
-    secondary: { main: colors.up },
-    success: { main: colors.up },
-    error: { main: colors.down },
-    warning: { main: colors.accent },
-    text: {
-      primary: colors.text,
-      secondary: colors.textSecondary,
+    typography: {
+      fontFamily: fonts.ui,
+      fontSize: 13,
+      // Data-dense terminal: compact monospace-friendly defaults.
+      body2: { fontFamily: fonts.mono, fontSize: 12 },
+      caption: { fontFamily: fonts.mono, fontSize: 11 },
     },
-    divider: colors.border,
-  },
-  typography: {
-    fontFamily: fonts.ui,
-    fontSize: 13,
-    // Data-dense terminal: compact monospace-friendly defaults.
-    body2: { fontFamily: fonts.mono, fontSize: 12 },
-    caption: { fontFamily: fonts.mono, fontSize: 11 },
-  },
-  shape: { borderRadius: 4 },
-  components: {
-    MuiCssBaseline: {
-      styleOverrides: {
-        body: {
-          backgroundColor: colors.background,
-          color: colors.text,
+    shape: { borderRadius: 4 },
+    components: {
+      MuiCssBaseline: {
+        styleOverrides: {
+          body: {
+            backgroundColor: c.background,
+            color: c.text,
+          },
+        },
+      },
+      MuiTableCell: {
+        styleOverrides: {
+          root: {
+            borderBottomColor: c.border,
+            fontFamily: fonts.mono,
+            fontSize: 12,
+            padding: '4px 8px',
+          },
+          head: {
+            backgroundColor: c.panelRaised,
+            color: c.textSecondary,
+            fontFamily: fonts.ui,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+          },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundImage: 'none',
+            backgroundColor: c.panel,
+          },
+        },
+      },
+      MuiTooltip: {
+        styleOverrides: {
+          tooltip: {
+            backgroundColor: c.panelRaised,
+            border: `1px solid ${c.border}`,
+            fontFamily: fonts.mono,
+          },
         },
       },
     },
-    MuiTableCell: {
-      styleOverrides: {
-        root: {
-          borderBottomColor: colors.border,
-          fontFamily: fonts.mono,
-          fontSize: 12,
-          padding: '4px 8px',
-        },
-        head: {
-          backgroundColor: colors.panelRaised,
-          color: colors.textSecondary,
-          fontFamily: fonts.ui,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em',
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          backgroundImage: 'none',
-          backgroundColor: colors.panel,
-        },
-      },
-    },
-    MuiTooltip: {
-      styleOverrides: {
-        tooltip: {
-          backgroundColor: colors.panelRaised,
-          border: `1px solid ${colors.border}`,
-          fontFamily: fonts.mono,
-        },
-      },
-    },
-  },
-});
+  });
+}
+
+/**
+ * MUI v5 theme — dark variant, kept for existing imports (tests, stories).
+ */
+export const muiTheme = getMuiTheme('dark');
 
 /**
  * Token shape consumed by react-jss style files via `createUseStyles` /
  * `withStyles` theme functions.
  */
 export interface JssTheme {
-  colors: typeof colors;
+  colors: ThemeColors;
   fonts: typeof fonts;
   spacing: {
     /** Base spacing unit in px. */
@@ -138,19 +182,27 @@ export interface JssTheme {
 }
 
 /**
- * Plain theme object for react-jss `ThemeProvider` — same tokens as the MUI
- * theme so custom JSS styling and MUI widgets stay visually consistent.
+ * Build the plain theme object for react-jss `ThemeProvider` — same tokens as
+ * the MUI theme so custom JSS styling and MUI widgets stay visually
+ * consistent.
  */
-export const jssTheme: JssTheme = {
-  colors,
-  fonts,
-  spacing: {
-    unit: 8,
-    rowHeight: 26,
-    treeIndent: 16,
-  },
-  borderRadius: 4,
-  flashDurationMs: 600,
-};
+export function getJssTheme(mode: ThemeMode): JssTheme {
+  return {
+    colors: getColors(mode),
+    fonts,
+    spacing: {
+      unit: 8,
+      rowHeight: 26,
+      treeIndent: 16,
+    },
+    borderRadius: 4,
+    flashDurationMs: 600,
+  };
+}
+
+/**
+ * Plain JSS theme object — dark variant, kept for existing imports.
+ */
+export const jssTheme: JssTheme = getJssTheme('dark');
 
 export default muiTheme;
