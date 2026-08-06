@@ -1,6 +1,7 @@
 # Solutions
 
-Fixes for every bug in `bugs.md`, same numbering.
+Fixes for every bug in `bugs.md`, same numbering. (Kept out of the repo on
+purpose — `bugs.md` is committed, this file is the answer key.)
 
 ### 1. Undefined cells render "undefined"
 `src/helpers/formatHelpers.ts`, `formatCell` guard:
@@ -41,8 +42,7 @@ if (!user) {
 ```
 
 ### 5. `noReportText is not defined`
-`src/components/StatusBar/StatusBar.jsx`, `renderReportSection`: the
-placeholder branch references an undeclared variable.
+`src/components/StatusBar/StatusBar.jsx`, `renderReportSection`:
 ```jsx
 // buggy
 <span className={classes.placeholder}>{noReportText}</span>
@@ -105,7 +105,7 @@ return {
 
 ### 10. Frontend-hardcoded menu data
 `src/store/menu/reducer.js`: seed the tree from the API payload again and
-delete `src/constants/menuData.js`:
+delete `src/constants/menuData.js` (and its now-unused import):
 ```js
 // buggy
 items: MENU_DATA,
@@ -160,7 +160,7 @@ root: {
   justifyContent: 'space-between',
   gap: theme.spacing.unit * 2,
   height: 28,
-  ...            // (drop lineHeight; keep the rest)
+  ...            // (drop lineHeight/overflow:hidden clearfix; keep the rest)
 },
 section: {
   display: 'flex',
@@ -183,14 +183,25 @@ expect(formatCell(undefined, type)).toBe('undefined');
 expect(formatCell(undefined, type)).toBe('');
 ```
 
-## Verification
+## Verification — the fix-verification suite
 
-- `npx tsc -b` passes both before and after fixes (the bugs are runtime bugs).
-- With the bugs planted, `npm test` fails 39 of 385 tests across 8 files
-  (menuHelpers, tableHelpers, menu reducer, TreeMenu, StatusBar, AppContainer,
-  LiveReportContainer, initThunk) — those failures point straight at bugs
-  2, 3, 4, 5, 6, 7, 8, 9 and 10. Bugs 1/17 (self-approving test), 11 (type),
-  and 12–16 (styles) are NOT covered by the suite and must be found by review
-  or in the browser.
-- After applying every fix above, all 385 tests should pass again and the
-  light/dark toggle should restyle the report table too.
+`src/__tests__/bugFixes.test.tsx` has one test per bug (same numbering), each
+asserting the CORRECT behavior:
+
+```bash
+npx vitest run src/__tests__/bugFixes.test.tsx
+```
+
+- **Buggy state:** all 19 tests fail, and `npx tsc -b` fails with
+  `TS2578: Unused '@ts-expect-error' directive` in that file — the
+  compile-time half of the bug #11 check (`ThemeMode = string` makes the
+  suppression unnecessary).
+- **Fixed state:** all 19 pass, `tsc -b` is clean, and the whole run is
+  404/404 tests across 27 files. This was proven end-to-end: every fix above
+  was applied, everything ran green, then the bugs were re-planted.
+
+While the bugs are in place, the pre-existing suite also fails 39 tests across
+8 files (menuHelpers, tableHelpers, menu reducer, TreeMenu, StatusBar,
+AppContainer, LiveReportContainer, initThunk), pointing at bugs 2–10.
+Bugs 1/17 (self-approving test), 11 (type) and 12–16 (styles) are only caught
+by `bugFixes.test.tsx`, review, or the browser.
