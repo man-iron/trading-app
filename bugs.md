@@ -3,6 +3,15 @@
 Seventeen deliberate bugs/inconsistencies. The app still boots (FX Spot loads and streams),
 but plenty is broken. Symptoms only here — fixes are in `solutions.md`.
 
+**Fix-verification suite:** `src/__tests__/bugFixes.test.tsx` has one test per bug
+(same numbering) asserting the *correct* behavior. All 19 tests fail right now;
+the app is fixed when they all pass — plus `npx tsc -b`, which fails until
+bug #11 is fixed. Run it with:
+
+```bash
+npx vitest run src/__tests__/bugFixes.test.tsx
+```
+
 ## Logic — null / undefined / loose equality
 
 ### 1. Undefined cells render the text "undefined"

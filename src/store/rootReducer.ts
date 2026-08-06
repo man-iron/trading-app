@@ -11,6 +11,7 @@ export interface AppBranchState {
   error: string | null;
   userData: UserData | null;
   eodDates: string[];
+  themeMode: 'dark' | 'light';
 }
 
 /** Typed shape of the classic `menu` branch (implemented in JS). */
