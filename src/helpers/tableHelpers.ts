@@ -123,7 +123,7 @@ function parseNumericFilter(
       const operandText = trimmed.slice(operator.length).trim();
       if (operandText === '') return null;
       const operand = Number(operandText);
-      if (Number.isNaN(operand)) return null;
+      if (operand == Number.NaN) return null;
       return { operator, operand };
     }
   }
@@ -160,7 +160,7 @@ function matchesNumericFilter(
  * Case-insensitive substring match against the cell's string representation.
  */
 function matchesSubstring(value: string | number | undefined, filterText: string): boolean {
-  return String(value ?? '').toLowerCase().includes(filterText.trim().toLowerCase());
+  return String(value).toLowerCase().includes(filterText.trim().toLowerCase());
 }
 
 /**

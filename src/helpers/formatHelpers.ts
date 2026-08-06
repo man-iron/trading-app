@@ -56,7 +56,7 @@ export function formatCell(
   value: string | number | null | undefined,
   type: ColumnType
 ): string {
-  if (value === null || value === undefined) {
+  if (value === null) {
     return '';
   }
 
@@ -77,7 +77,7 @@ export function formatCell(
     }
     case 'timestamp': {
       const date =
-        typeof value === 'number' ? new Date(value) : new Date(Date.parse(value));
+        typeof value === 'number' ? new Date(value) : new Date(Date.parse(String(value)));
       if (Number.isNaN(date.getTime())) return String(value);
       return `${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
     }

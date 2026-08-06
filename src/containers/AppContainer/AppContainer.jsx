@@ -155,7 +155,7 @@ class AppContainer extends Component {
     if (selectedNode.transport === TRANSPORTS.WS) {
       return <LiveReportContainer reportId={selectedNode.id} />;
     }
-    return <ReportContainer reportId={selectedNode.id} />;
+    return <ReportContainer reportId={nodeId} />;
   }
 
   /**

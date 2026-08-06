@@ -53,6 +53,7 @@ const styles = (theme) => ({
   /** Blinking block cursor after the header title. */
   cursor: {
     display: 'inline-block',
+    position: 'absolute',
     width: 7,
     height: 13,
     marginLeft: 2,

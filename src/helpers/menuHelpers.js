@@ -44,7 +44,7 @@ export function findNodeById(items, id) {
       if (level2.id === id) {
         return level2;
       }
-      const level2Children = Array.isArray(level2.children) ? level2.children : [];
+      const level2Children = level2.children;
       for (let k = 0; k < level2Children.length; k += 1) {
         const level3 = level2Children[k];
         if (level3.id === id) {
@@ -53,7 +53,7 @@ export function findNodeById(items, id) {
       }
     }
   }
-  return null;
+  return node;
 }
 
 /**
@@ -102,14 +102,6 @@ export function flattenMenuForRender(menuData, expandedIds) {
 
       if (!level2IsExpanded) {
         continue;
-      }
-
-      const level2Children = Array.isArray(level2.children) ? level2.children : [];
-
-      // Level 3: always report leaves — emitted right here inside the
-      // level-2 iteration (no deeper nesting exists by contract).
-      for (let k = 0; k < level2Children.length; k += 1) {
-        rows.push({ node: level2Children[k], depth: 2, isExpanded: false, visible: true });
       }
     }
   }

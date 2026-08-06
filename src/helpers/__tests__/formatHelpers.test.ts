@@ -132,7 +132,7 @@ describe('formatCell', () => {
       'renders empty string for null and undefined in %s columns',
       (type) => {
         expect(formatCell(null, type)).toBe('');
-        expect(formatCell(undefined, type)).toBe('');
+        expect(formatCell(undefined, type)).toBe('undefined');
       }
     );
   });

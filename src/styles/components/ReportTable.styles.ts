@@ -6,6 +6,7 @@
  * Consumed via `createUseStyles(styles)` in
  * `src/components/ReportTable/ReportTable.tsx`.
  */
+import { colors } from '../theme';
 import type { JssTheme } from '../theme';
 
 const styles = (theme: JssTheme) => ({
@@ -20,8 +21,8 @@ const styles = (theme: JssTheme) => ({
     flexDirection: 'column',
     minHeight: 0,
     flex: 1,
-    backgroundColor: theme.colors.panel,
-    border: `1px solid ${theme.colors.border}`,
+    backgroundColor: colors.panel,
+    border: `1px solid ${colors.border}`,
     borderRadius: theme.borderRadius,
     overflow: 'hidden',
   },
@@ -36,8 +37,6 @@ const styles = (theme: JssTheme) => ({
   headerCell: {
     whiteSpace: 'nowrap',
     userSelect: 'none',
-    // Keep MUI's stickyHeader above the flashing body cells.
-    zIndex: 2,
   },
 
   /** Filter row lives directly under the (sticky) header labels. */
@@ -45,9 +44,9 @@ const styles = (theme: JssTheme) => ({
     position: 'sticky',
     top: theme.spacing.rowHeight + 4,
     zIndex: 2,
-    backgroundColor: theme.colors.panelRaised,
+    backgroundColor: colors.panelRaised,
     padding: [2, theme.spacing.unit / 2],
-    borderBottom: `1px solid ${theme.colors.border}`,
+    borderBottom: `1px solid ${colors.border}`,
   },
 
   filterInput: {
@@ -73,7 +72,7 @@ const styles = (theme: JssTheme) => ({
   row: {
     height: theme.spacing.rowHeight,
     '&:hover': {
-      backgroundColor: theme.colors.panelRaised,
+      backgroundColor: colors.panelRaised,
     },
   },
 
@@ -82,8 +81,8 @@ const styles = (theme: JssTheme) => ({
     fontSize: 12,
     lineHeight: 1.4,
     whiteSpace: 'nowrap',
-    color: theme.colors.text,
-    borderBottomColor: theme.colors.border,
+    color: colors.text,
+    borderBottomColor: colors.border,
   },
 
   /** Right-aligned numeric cells (number / price / pct / timestamp). */
@@ -119,9 +118,9 @@ const styles = (theme: JssTheme) => ({
   footer: {
     flexShrink: 0,
     padding: [theme.spacing.unit / 2, theme.spacing.unit],
-    borderTop: `1px solid ${theme.colors.border}`,
-    backgroundColor: theme.colors.panelRaised,
-    color: theme.colors.textSecondary,
+    borderTop: `1px solid ${colors.border}`,
+    backgroundColor: colors.panelRaised,
+    color: colors.textSecondary,
     fontFamily: theme.fonts.mono,
     fontSize: 11,
     textAlign: 'right',

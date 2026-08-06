@@ -209,7 +209,6 @@ const styles = (theme) => ({
     width: 300,
     flexShrink: 0,
     padding: theme.spacing.unit * 2,
-    boxSizing: 'border-box',
     backgroundColor: theme.colors.panel,
     borderRight: `1px solid ${theme.colors.border}`,
   },

@@ -9,11 +9,10 @@
  */
 const styles = (theme) => ({
   root: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing.unit * 2,
+    display: 'block',
+    overflow: 'hidden',
     height: 28,
+    lineHeight: '28px',
     padding: [0, theme.spacing.unit + 2],
     backgroundColor: theme.colors.panelRaised,
     borderTop: `1px solid ${theme.colors.border}`,
@@ -28,12 +27,15 @@ const styles = (theme) => ({
 
   /** Generic section (left: user, middle: report, right: clock). */
   section: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing.unit,
+    float: 'left',
+    marginRight: theme.spacing.unit * 3,
     minWidth: 0,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    '&:last-child': {
+      float: 'right',
+      marginRight: 0,
+    },
   },
 
   /** The user's display name — brighter than the rest of the bar. */

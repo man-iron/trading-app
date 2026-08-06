@@ -19,7 +19,7 @@
 import { createTheme, type Theme } from '@mui/material/styles';
 
 /** The two supported UI themes. */
-export type ThemeMode = 'dark' | 'light';
+export type ThemeMode = string;
 
 /** Dark color tokens — the original terminal palette. */
 export const darkColors = {
@@ -84,7 +84,7 @@ export function getMuiTheme(mode: ThemeMode): Theme {
   const c = getColors(mode);
   return createTheme({
     palette: {
-      mode,
+      mode: mode as 'dark' | 'light',
       background: {
         default: c.background,
         paper: c.panel,

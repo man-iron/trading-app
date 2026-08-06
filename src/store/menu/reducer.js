@@ -4,6 +4,7 @@ import {
   MENU_TOGGLE_NODE,
   MENU_SELECT_REPORT,
 } from '../../constants/actionTypes';
+import MENU_DATA from '../../constants/menuData';
 
 /**
  * @typedef {Object} MenuState
@@ -30,13 +31,13 @@ export const initialState = {
 export default function menuReducer(state = initialState, action = {}) {
   switch (action.type) {
     case APP_INIT_SUCCESS: {
-      const { menuData, userData } = action.payload;
+      const { userData } = action.payload;
       const defaultReportId =
         (userData && userData.preferences && userData.preferences.defaultReportId) ||
         null;
       return {
         ...state,
-        items: menuData,
+        items: MENU_DATA,
         expandedIds: [],
         selectedReportId: defaultReportId,
       };
@@ -49,12 +50,12 @@ export default function menuReducer(state = initialState, action = {}) {
     case MENU_TOGGLE_NODE: {
       const nodeId = action.payload;
       const isExpanded = state.expandedIds.includes(nodeId);
-      return {
-        ...state,
-        expandedIds: isExpanded
-          ? state.expandedIds.filter((id) => id !== nodeId)
-          : [...state.expandedIds, nodeId],
-      };
+      if (isExpanded) {
+        state.expandedIds.splice(state.expandedIds.indexOf(nodeId), 1);
+      } else {
+        state.expandedIds.push(nodeId);
+      }
+      return state;
     }
     case MENU_SELECT_REPORT:
       return {
