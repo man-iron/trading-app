@@ -1,0 +1,1 @@
+import{_ as o,T as r}from"./theming.esm-DukwDhwJ.js";import"./index-BeMkoiPZ.js";import{d as e}from"./DefaultPropsProvider-DWn1qIkK.js";import{j as m}from"./jsx-runtime-DCCOt0jE.js";import{G as s}from"./reportConstants-DRLxDv27.js";function n(t){return m.jsx(s,o({},t,{defaultTheme:e,themeId:r}))}export{n as G};

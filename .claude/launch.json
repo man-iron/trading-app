@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "trading-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "me"],
+      "port": 3000
+    }
+  ]
+}
