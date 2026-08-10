@@ -22,7 +22,9 @@ full fixes are in `solutions.md` on the `solutions` branch.
 ### 1. Cells render "undefined"
 - **Where:** `src/helpers/formatHelpers.ts`, `formatCell`.
 - **Concept:** `==` vs `===` with `null`/`undefined` — which values does the
-  empty-cell guard actually catch?
+  empty-cell guard actually catch? Note: the feed omitting fields it can't
+  quote is *legitimate* (real market data does this) — the fix belongs in the
+  client's rendering, not in the WS server.
 
 ### 2. Malformed numeric filters match nothing
 - **Where:** `src/helpers/tableHelpers.ts`, `parseNumericFilter`.

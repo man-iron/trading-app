@@ -26,6 +26,23 @@ const TICK_MIN_MS = 800;
 const TICK_MAX_MS = 1500;
 const MAX_ROWS_PER_TICK = 5;
 
+/**
+ * Fields some venues legitimately fail to quote. The live feed omits these
+ * from a few rows — that is normal for real market data, and the UI is
+ * expected to render missing values gracefully whatever the wire sends.
+ * Shape: reportId -> { rowId -> [omitted field keys] }
+ */
+const SPARSE_FEED_FIELDS = {
+  'fx-spot': {
+    'fx-spot-usd-jpy': ['bid'],
+    'fx-spot-usd-chf': ['bid', 'ask'],
+  },
+  stocks: {
+    'stocks-gs': ['volume'],
+    'stocks-msft': ['name'],
+  },
+};
+
 const wss = new WebSocketServer({ port: PORT });
 let nextClientId = 1;
 
@@ -126,7 +143,12 @@ wss.on('connection', (socket) => {
       }
       // Re-subscribing resets the stream: tear down, fresh snapshot, new ticks.
       teardown(reportId);
-      const rows = report.rows.map((row) => ({ ...row }));
+      const sparseByRow = SPARSE_FEED_FIELDS[reportId] ?? {};
+      const rows = report.rows.map((row) => {
+        const clone = { ...row };
+        for (const field of sparseByRow[row.id] ?? []) delete clone[field];
+        return clone;
+      });
       subscriptions.set(reportId, { rows, timer: null });
       send(socket, {
         type: 'snapshot',
