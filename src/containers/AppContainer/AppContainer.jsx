@@ -163,7 +163,7 @@ class AppContainer extends Component {
    * @returns {import('react').ReactNode}
    */
   render() {
-    const { classes, status, userData, selectedNode, themeMode, onToggleTheme } =
+    { classes, status, userData, selectedNode, themeMode, onToggleTheme } =
       this.props;
 
     if (status === 'idle' || status === 'loading') {

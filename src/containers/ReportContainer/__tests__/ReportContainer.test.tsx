@@ -56,6 +56,7 @@ function preloadedState(): PreloadedRootState {
       error: null,
       userData: null,
       eodDates: EOD_DATES,
+      themeMode: 'dark',
     },
     menu: {
       items: buildMenuFixture(),

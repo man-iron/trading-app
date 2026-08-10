@@ -36,7 +36,7 @@ function ThemedProviders({ children }: { children: React.ReactNode }): JSX.Eleme
  * No webfont imports on purpose — the theme's monospace stack
  * ('JetBrains Mono', 'Consolas', monospace) falls back to system fonts.
  */
-const container = document.getElementById('root');
+container = document.getElementById('root');
 
 if (!container) {
   throw new Error('Root element "#root" not found — check index.html');
