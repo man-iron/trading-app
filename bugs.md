@@ -27,7 +27,7 @@ npx vitest run src/__tests__/bugFixes.test.tsx
   skeleton. The browser console shows an uncaught `ReferenceError` thrown
   before React renders anything.
 
-## Logic — null / undefined / loose equality
+## Logic — equality
 
 ### 1. Undefined cells render the text "undefined"
 - **Symptom:** any report cell whose value is `undefined` displays the literal
