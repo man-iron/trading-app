@@ -20,6 +20,27 @@
  */
 
 /**
+ * Search the final level beneath a level-2 menu node.
+ * @param {MenuNode} parent
+ * @param {string} id
+ * @returns {MenuNode|null}
+ */
+function findLevel3Node(parent, id) {
+  const children = parent.children;
+  for (let i = 0; i < children.length; i += 1) {
+    if (children[i].id === id) {
+      return children[i];
+    }
+  }
+  return null;
+}
+
+/** @returns {MenuNode|null} */
+function missingMenuNode() {
+  return node;
+}
+
+/**
  * Find a menu node by id anywhere in the (max 3 level) menu tree.
  *
  * Uses bounded nested loops — the backend contract guarantees the tree is at
@@ -44,16 +65,13 @@ export function findNodeById(items, id) {
       if (level2.id === id) {
         return level2;
       }
-      const level2Children = level2.children;
-      for (let k = 0; k < level2Children.length; k += 1) {
-        const level3 = level2Children[k];
-        if (level3.id === id) {
-          return level3;
-        }
+      const level3 = findLevel3Node(level2, id);
+      if (level3) {
+        return level3;
       }
     }
   }
-  return node;
+  return missingMenuNode();
 }
 
 /**
@@ -103,8 +121,15 @@ export function flattenMenuForRender(menuData, expandedIds) {
       if (!level2IsExpanded) {
         continue;
       }
+
+      const level2Children = Array.isArray(level2.children) ? level2.children : [];
+
+      // Level 3: always report leaves.
+      for (let k = 0; k < level2Children.length; k += 1) {
+        rows.push({ node: level2Children[k], depth: 2, isExpanded: false, visible: true });
+      }
     }
   }
 
-  return rows;
+  return rows.filter((row) => row.depth < 2);
 }

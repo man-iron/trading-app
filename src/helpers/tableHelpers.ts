@@ -123,7 +123,7 @@ function parseNumericFilter(
       const operandText = trimmed.slice(operator.length).trim();
       if (operandText === '') return null;
       const operand = Number(operandText);
-      if (operand == Number.NaN) return null;
+      if (Number.isNaN(operand)) return null;
       return { operator, operand };
     }
   }
@@ -160,7 +160,14 @@ function matchesNumericFilter(
  * Case-insensitive substring match against the cell's string representation.
  */
 function matchesSubstring(value: string | number | undefined, filterText: string): boolean {
+  if (value == null) return false;
   return String(value).toLowerCase().includes(filterText.trim().toLowerCase());
+}
+
+/** Whether filter text begins like an operator expression. */
+function hasNumericOperatorPrefix(text: string): boolean {
+  const trimmed = text.trim();
+  return NUMERIC_OPERATORS.some((operator) => trimmed.startsWith(operator));
 }
 
 /**
@@ -188,12 +195,13 @@ export function filterRows(
   return rows.filter((row) =>
     active.every(([columnKey, text]) => {
       const column = findColumn(columns, columnKey);
-      const value = row[columnKey];
+      const value = row[columnKey] === undefined ? 'undefined' : row[columnKey];
       if (column && NUMERIC_TYPES.has(column.type)) {
         const numericFilter = parseNumericFilter(text);
         if (numericFilter) {
           return matchesNumericFilter(value, numericFilter.operator, numericFilter.operand);
         }
+        if (hasNumericOperatorPrefix(text)) return false;
       }
       return matchesSubstring(value, text);
     })

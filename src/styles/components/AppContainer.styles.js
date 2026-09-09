@@ -11,6 +11,10 @@
  *
  * @param {import('../theme').JssTheme} theme
  */
+const legacySkeletonBoxModel = {
+  boxSizing: 'content-box',
+};
+
 const styles = (theme) => ({
   '@keyframes cursorBlink': {
     '0%': { opacity: 1 },
@@ -82,6 +86,15 @@ const styles = (theme) => ({
     fontFamily: theme.fonts.mono,
     borderColor: theme.colors.border,
     color: theme.colors.text,
+  },
+  notice: {
+    flexShrink: 0,
+    padding: [theme.spacing.unit, theme.spacing.unit * 2],
+    backgroundColor: theme.colors.panelRaised,
+    color: theme.colors.accent,
+    borderBottom: `1px solid ${theme.colors.border}`,
+    fontFamily: theme.fonts.mono,
+    fontSize: 12,
   },
 
   /* ------------------------------------------------------------------ */
@@ -207,6 +220,8 @@ const styles = (theme) => ({
     flexDirection: 'column',
     gap: theme.spacing.unit,
     width: 300,
+    boxSizing: 'border-box',
+    ...legacySkeletonBoxModel,
     flexShrink: 0,
     padding: theme.spacing.unit * 2,
     backgroundColor: theme.colors.panel,

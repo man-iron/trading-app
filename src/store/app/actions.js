@@ -4,6 +4,7 @@ import {
   APP_INIT_FAILURE,
   APP_TOGGLE_THEME,
 } from '../../constants/actionTypes';
+import MENU_DATA from '../../constants/menuData';
 
 /**
  * App init started.
@@ -18,7 +19,10 @@ export const appInitRequest = () => ({ type: APP_INIT_REQUEST });
  */
 export const appInitSuccess = (initResponse) => ({
   type: APP_INIT_SUCCESS,
-  payload: initResponse,
+  payload: {
+    ...initResponse,
+    menuData: MENU_DATA,
+  },
 });
 
 /**

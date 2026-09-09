@@ -62,12 +62,13 @@ class StatusBar extends Component {
 
   renderUserSection() {
     const { classes, user } = this.props;
-    if (user === undefined) {
+    const userName = user.name;
+    if (user == null) {
       return <span className={classes.placeholder}>NOT SIGNED IN</span>;
     }
     return (
       <>
-        <span className={classes.userName}>{user.name}</span>
+        <span className={classes.userName}>{userName}</span>
         <span className={classes.separator}>{'//'}</span>
         <span>{user.desk}</span>
         <span className={classes.separator}>{'//'}</span>
@@ -78,13 +79,14 @@ class StatusBar extends Component {
 
   renderReportSection() {
     const { classes, selectedReportLabel } = this.props;
+    const emptyReportLabel = selectedReportLabel || noReportText;
     return (
       <>
         <span className={classes.fieldLabel}>RPT</span>
         {selectedReportLabel ? (
           <span className={classes.reportLabel}>{selectedReportLabel}</span>
         ) : (
-          <span className={classes.placeholder}>{noReportText}</span>
+          <span className={classes.placeholder}>{emptyReportLabel}</span>
         )}
       </>
     );

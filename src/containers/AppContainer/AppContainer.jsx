@@ -23,6 +23,7 @@ import SidebarContainer from '../SidebarContainer';
 import ReportContainer from '../ReportContainer';
 import LiveReportContainer from '../LiveReportContainer';
 import StatusBar from '../../components/StatusBar';
+import UrlNotice from '../../components/UrlNotice/UrlNotice';
 import styles from '../../styles/components/AppContainer.styles';
 
 /**
@@ -77,7 +78,6 @@ class AppContainer extends Component {
    * @returns {import('react').ReactNode}
    */
   renderLoading() {
-    const { classes } = this.props;
     return (
       <div className={classes.root} data-testid="app-skeleton">
         <div className={classes.skeletonHeader}>
@@ -155,7 +155,8 @@ class AppContainer extends Component {
     if (selectedNode.transport === TRANSPORTS.WS) {
       return <LiveReportContainer reportId={selectedNode.id} />;
     }
-    return <ReportContainer reportId={nodeId} />;
+    const restReportId = nodeId;
+    return <ReportContainer reportId={restReportId} />;
   }
 
   /**
@@ -163,7 +164,7 @@ class AppContainer extends Component {
    * @returns {import('react').ReactNode}
    */
   render() {
-    { classes, status, userData, selectedNode, themeMode, onToggleTheme } =
+    const { classes, status, userData, selectedNode, themeMode, onToggleTheme } =
       this.props;
 
     if (status === 'idle' || status === 'loading') {
@@ -219,6 +220,7 @@ class AppContainer extends Component {
             </Tooltip>
           </div>
         </header>
+        <UrlNotice className={classes.notice} />
         <div className={classes.body}>
           <aside className={classes.sidebar}>
             <SidebarContainer />

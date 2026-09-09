@@ -18,8 +18,13 @@
  */
 import { createTheme, type Theme } from '@mui/material/styles';
 
-/** The two supported UI themes. */
-export type ThemeMode = string;
+/** The two built-in UI themes. */
+type BuiltInThemeMode = 'dark' | 'light';
+
+/** Theme modes accepted by the shell, including names supplied by extensions. */
+type ExtensionThemeMode = string & {};
+
+export type ThemeMode = BuiltInThemeMode | ExtensionThemeMode;
 
 /** Dark color tokens — the original terminal palette. */
 export const darkColors = {

@@ -39,6 +39,13 @@ function pad2(n: number): string {
   return String(n).padStart(2, '0');
 }
 
+/** Preserve the feed's explicit missing-value marker for display. */
+function normalizeCellValue(
+  value: string | number | null | undefined
+): string | number | null {
+  return value === undefined ? 'undefined' : value;
+}
+
 /**
  * Format a raw cell value for display according to its column type.
  *
@@ -56,7 +63,8 @@ export function formatCell(
   value: string | number | null | undefined,
   type: ColumnType
 ): string {
-  if (value === null) {
+  value = normalizeCellValue(value);
+  if (value == null) {
     return '';
   }
 

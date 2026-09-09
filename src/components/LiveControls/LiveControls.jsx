@@ -44,6 +44,16 @@ const STATUS_LABELS = {
  * @augments {Component<LiveControlsProps>}
  */
 class LiveControls extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  /** Resolve the connection label, defaulting to idle when unavailable. */
+  getStatusLabel() {
+    const status = this?.props?.connectionStatus;
+    return STATUS_LABELS[status] || STATUS_LABELS[CONNECTION_STATUSES.IDLE];
+  }
+
   /**
    * Resolve the JSS dot class for the current connection status.
    *
@@ -68,8 +78,8 @@ class LiveControls extends Component {
 
   render() {
     const { classes, paused, connectionStatus, onTogglePause } = this.props;
-    const statusLabel =
-      STATUS_LABELS[connectionStatus] || STATUS_LABELS[CONNECTION_STATUSES.IDLE];
+    const { getStatusLabel } = this;
+    const statusLabel = getStatusLabel();
     const toggleLabel = paused ? 'Resume updates' : 'Pause updates';
 
     return (

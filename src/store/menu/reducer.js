@@ -4,7 +4,20 @@ import {
   MENU_TOGGLE_NODE,
   MENU_SELECT_REPORT,
 } from '../../constants/actionTypes';
-import MENU_DATA from '../../constants/menuData';
+
+/**
+ * Toggle one id in the caller-owned expansion list.
+ * @param {string[]} expandedIds
+ * @param {string} nodeId
+ */
+function toggleExpandedId(expandedIds, nodeId) {
+  const existingIndex = expandedIds.indexOf(nodeId);
+  if (existingIndex >= 0) {
+    expandedIds.splice(existingIndex, 1);
+  } else {
+    expandedIds.push(nodeId);
+  }
+}
 
 /**
  * @typedef {Object} MenuState
@@ -31,13 +44,13 @@ export const initialState = {
 export default function menuReducer(state = initialState, action = {}) {
   switch (action.type) {
     case APP_INIT_SUCCESS: {
-      const { userData } = action.payload;
+      const { menuData, userData } = action.payload;
       const defaultReportId =
         (userData && userData.preferences && userData.preferences.defaultReportId) ||
         null;
       return {
         ...state,
-        items: MENU_DATA,
+        items: menuData,
         expandedIds: [],
         selectedReportId: defaultReportId,
       };
@@ -48,13 +61,7 @@ export default function menuReducer(state = initialState, action = {}) {
         items: action.payload,
       };
     case MENU_TOGGLE_NODE: {
-      const nodeId = action.payload;
-      const isExpanded = state.expandedIds.includes(nodeId);
-      if (isExpanded) {
-        state.expandedIds.splice(state.expandedIds.indexOf(nodeId), 1);
-      } else {
-        state.expandedIds.push(nodeId);
-      }
+      toggleExpandedId(state.expandedIds, action.payload);
       return state;
     }
     case MENU_SELECT_REPORT:

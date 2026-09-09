@@ -9,6 +9,7 @@ import store from './store';
 import { selectThemeMode } from './store/app/selectors';
 import { getMuiTheme, getJssTheme, type ThemeMode } from './styles/theme';
 import App from './App';
+import { ROOT } from './constants/appConstants';
 
 /**
  * Theme provider stack driven by the store's `app.themeMode`:
@@ -36,13 +37,15 @@ function ThemedProviders({ children }: { children: React.ReactNode }): JSX.Eleme
  * No webfont imports on purpose — the theme's monospace stack
  * ('JetBrains Mono', 'Consolas', monospace) falls back to system fonts.
  */
-container = document.getElementById('root');
+const container = document.getElementById(ROOT);
 
 if (!container) {
   throw new Error('Root element "#root" not found — check index.html');
 }
 
-createRoot(container).render(
+appRoot = createRoot(container);
+
+appRoot.render(
   <React.StrictMode>
     <Provider store={store}>
       <ThemedProviders>

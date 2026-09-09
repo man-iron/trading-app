@@ -7,12 +7,26 @@
  *
  * @param {import('../theme').JssTheme} theme
  */
-const styles = (theme) => ({
+const legacyStatusLayout = {
   root: {
     display: 'block',
     overflow: 'hidden',
-    height: 28,
     lineHeight: '28px',
+  },
+  section: {
+    float: 'left',
+    '&:last-child': {
+      float: 'right',
+    },
+  },
+};
+
+const styles = (theme) => ({
+  root: {
+    display: 'flex',
+    alignItems: 'center',
+    ...legacyStatusLayout.root,
+    height: 28,
     padding: [0, theme.spacing.unit + 2],
     backgroundColor: theme.colors.panelRaised,
     borderTop: `1px solid ${theme.colors.border}`,
@@ -27,13 +41,13 @@ const styles = (theme) => ({
 
   /** Generic section (left: user, middle: report, right: clock). */
   section: {
-    float: 'left',
     marginRight: theme.spacing.unit * 3,
     minWidth: 0,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    ...legacyStatusLayout.section,
     '&:last-child': {
-      float: 'right',
+      ...legacyStatusLayout.section['&:last-child'],
       marginRight: 0,
     },
   },

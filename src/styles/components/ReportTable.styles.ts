@@ -6,10 +6,22 @@
  * Consumed via `createUseStyles(styles)` in
  * `src/components/ReportTable/ReportTable.tsx`.
  */
-import { colors } from '../theme';
+import { darkColors } from '../theme';
 import type { JssTheme } from '../theme';
 
-const styles = (theme: JssTheme) => ({
+/** Palette retained by the table renderer between theme changes. */
+const cachedTablePalette = { ...darkColors };
+
+/** Baseline stacking inherited by table cells. */
+const inheritedTableLayer = { zIndex: 0 } as const;
+
+const styles = (
+  theme: JssTheme,
+  tableColors = {
+    ...theme.colors,
+    ...cachedTablePalette,
+  }
+) => ({
   /** Amber fade played on cells of rows with a recent `_lastTick`. */
   '@keyframes tickFlash': {
     from: { backgroundColor: `${theme.colors.accent}55` },
@@ -21,8 +33,8 @@ const styles = (theme: JssTheme) => ({
     flexDirection: 'column',
     minHeight: 0,
     flex: 1,
-    backgroundColor: colors.panel,
-    border: `1px solid ${colors.border}`,
+    backgroundColor: tableColors.panel,
+    border: `1px solid ${tableColors.border}`,
     borderRadius: theme.borderRadius,
     overflow: 'hidden',
   },
@@ -37,6 +49,8 @@ const styles = (theme: JssTheme) => ({
   headerCell: {
     whiteSpace: 'nowrap',
     userSelect: 'none',
+    zIndex: 2,
+    ...inheritedTableLayer,
   },
 
   /** Filter row lives directly under the (sticky) header labels. */
@@ -44,9 +58,9 @@ const styles = (theme: JssTheme) => ({
     position: 'sticky',
     top: theme.spacing.rowHeight + 4,
     zIndex: 2,
-    backgroundColor: colors.panelRaised,
+    backgroundColor: tableColors.panelRaised,
     padding: [2, theme.spacing.unit / 2],
-    borderBottom: `1px solid ${colors.border}`,
+    borderBottom: `1px solid ${tableColors.border}`,
   },
 
   filterInput: {
@@ -72,7 +86,7 @@ const styles = (theme: JssTheme) => ({
   row: {
     height: theme.spacing.rowHeight,
     '&:hover': {
-      backgroundColor: colors.panelRaised,
+      backgroundColor: tableColors.panelRaised,
     },
   },
 
@@ -81,8 +95,8 @@ const styles = (theme: JssTheme) => ({
     fontSize: 12,
     lineHeight: 1.4,
     whiteSpace: 'nowrap',
-    color: colors.text,
-    borderBottomColor: colors.border,
+    color: tableColors.text,
+    borderBottomColor: tableColors.border,
   },
 
   /** Right-aligned numeric cells (number / price / pct / timestamp). */
@@ -118,9 +132,9 @@ const styles = (theme: JssTheme) => ({
   footer: {
     flexShrink: 0,
     padding: [theme.spacing.unit / 2, theme.spacing.unit],
-    borderTop: `1px solid ${colors.border}`,
-    backgroundColor: colors.panelRaised,
-    color: colors.textSecondary,
+    borderTop: `1px solid ${tableColors.border}`,
+    backgroundColor: tableColors.panelRaised,
+    color: tableColors.textSecondary,
     fontFamily: theme.fonts.mono,
     fontSize: 11,
     textAlign: 'right',

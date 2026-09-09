@@ -1,14 +1,17 @@
 # Planted Bugs
 
-Nineteen deliberate bugs. This file lists **symptoms and how to reproduce
+Twenty-two deliberate bugs. This file lists **symptoms and how to reproduce
 them** — what you can observe going wrong, in roughly the order you'll hit
 them. No file names, no causes, no fixes here: work them out yourself. If
 you're stuck, `hints.md` has a per-bug pointer (file + the concept involved);
 the full walkthrough lives in `solutions.md` on the `solutions` branch.
 
-**Fix-verification suite:** `src/__tests__/bugFixes.test.tsx` has one test per
-numbered bug (same numbering) asserting the *correct* behavior. Note: the suite
-cannot even run until the startup bugs (0a/0b) are fixed, and `npx tsc -b`
+**Fix-verification suite:** `src/__tests__/bugFixes.test.tsx` covers bugs #1–17
+with matching numbers, asserting the *correct* behavior. Bug #18 uses the
+existing LiveControls suite linked below; #19 has a dedicated UrlNotice suite.
+Note: the suite
+cannot collect until startup bug 0a is fixed; the browser also needs 0b/0c
+fixed before React can render, and `npx tsc -b`
 stays red until bug #11 is fixed. Run it with:
 
 ```bash
@@ -31,10 +34,16 @@ npx vitest run src/__tests__/bugFixes.test.tsx -t "bug #7"
 
 ### 0b. Blank page after 0a is fixed
 - **Symptom:** once 0a compiles, the page is completely blank — no chrome, no
-  skeleton — with an uncaught `ReferenceError` thrown before React renders
-  anything.
+  skeleton — with an uncaught error saying the root element was not found,
+  even though the page contains a mounting element.
 - **Reproduce:** fix 0a, reload http://localhost:3000, open the browser
   console (F12).
+
+### 0c. Blank page after 0b is fixed
+- **Symptom:** once the root element is found, an uncaught `ReferenceError`
+  still prevents React from rendering anything.
+- **Reproduce:** fix 0a and 0b, reload http://localhost:3000, inspect the
+  browser console.
 
 ## Logic — equality
 
@@ -165,3 +174,25 @@ npx vitest run src/__tests__/bugFixes.test.tsx -t "bug #7"
   it and fix the assertion too.
 - **Reproduce:** fix bug #1, run `npx vitest run src/helpers` — a previously
   green test now fails, asserting the buggy output.
+
+## Logic — visible connection text
+
+### 18. Live connection says "Idle" while prices update
+- **Symptom:** the live report's connection dot turns green and prices update,
+  but its text still says `Idle` instead of `Connected`.
+- **Reproduce:** after fixing the startup bugs, open the default FX Spot
+  report and wait for the live connection. Compare the dot with its label.
+  The label also stays `Idle` while connecting or after disconnection.
+- **Verify:** `npx vitest run src/components/LiveControls/__tests__/LiveControls.test.jsx`.
+
+## Security — URL notice
+
+### 19. A shared URL can change the notice's markup
+- **Symptom:** text supplied through the `notice` URL parameter is rendered
+  as HTML instead of appearing literally in the banner below the header.
+- **Reproduce:** after fixing startup, open
+  `http://localhost:3000/?notice=%3Cstrong%3EINJECTED%20NOTICE%3C%2Fstrong%3E`.
+  The words appear bold and the markup becomes an element instead of text.
+- **Discuss:** who controls the URL, what else could HTML do in this context,
+  and how should a plain-text notice be rendered safely?
+- **Verify:** `npx vitest run src/components/UrlNotice/__tests__/UrlNotice.test.jsx`.

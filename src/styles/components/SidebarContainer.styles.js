@@ -8,6 +8,10 @@
  *
  * @param {import('../theme').JssTheme} theme
  */
+const legacyDetachedCursor = {
+  position: 'absolute',
+};
+
 const styles = (theme) => ({
   '@keyframes cursorBlink': {
     '0%': { opacity: 1 },
@@ -53,7 +57,7 @@ const styles = (theme) => ({
   /** Blinking block cursor after the header title. */
   cursor: {
     display: 'inline-block',
-    position: 'absolute',
+    ...legacyDetachedCursor,
     width: 7,
     height: 13,
     marginLeft: 2,
