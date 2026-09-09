@@ -1,248 +1,411 @@
-# Solutions
+# Solutions to the planted bugs
 
-Fixes for every bug in `bugs.md`, same numbering. This branch is the answer
-key; on the `bugs` branch, `bugs.md` lists symptoms + repro steps only and
-`hints.md` holds per-bug pointers.
+This guide covers all 22 deliberate bugs in the current working tree: startup
+bugs 0a–0c and bugs #1–19. Numbering matches `bugs.md`. The snippets below are
+fixes to apply, not changes already made to the application.
 
-## Startup
+Fix the startup bugs in order to reach the UI. The remaining bugs can generally
+be fixed independently; fix #17 alongside #1 so the formatting tests agree with
+the corrected behavior.
 
-### 0a. The dev server refuses to compile
-`src/containers/AppContainer/AppContainer.jsx`, `render()`:
+## 0a. The dev server refuses to compile
+
+**File:** `src/containers/AppContainer/AppContainer.jsx`, `renderLoading`.
+
+The destructuring statement has no declaration keyword. Replace it with:
+
 ```jsx
-// buggy — destructuring assignment with no declaration: at statement
-// position the parser reads `{ ... }` as a BLOCK, then chokes on the `=`
-{ classes, status, userData, selectedNode, themeMode, onToggleTheme } =
-  this.props;
-// fix
-const { classes, status, userData, selectedNode, themeMode, onToggleTheme } =
-  this.props;
+const { classes } = this.props;
 ```
-(Parenthesizing `({ ... } = this.props)` would parse, but would assign to
-undeclared globals — the declaration is the real fix.)
 
-### 0b. Blank page once 0a compiles
-`src/main.tsx`, near the bottom:
+Without `const`, the parser treats the opening brace as a block rather than a
+variable declaration. This prevents compilation and can also block test collection
+when a suite imports this component.
+
+## 0b. Root element not found
+
+**Files:** `src/constants/appConstants.ts` and `src/main.tsx`.
+
+Remove the trailing space from the constant:
+
 ```ts
-// buggy — ES modules run in strict mode: assigning to an undeclared
-// identifier throws ReferenceError instead of creating a global
-container = document.getElementById('root');
-// fix
-const container = document.getElementById('root');
+export const ROOT = 'root';
 ```
 
-### 1. Undefined cells render "undefined"
-Visible out of the box on the `bugs` branch: the WS server deliberately
-serves a **sparse feed** (FX Spot: USD/JPY `bid`, USD/CHF `bid`+`ask`;
-Stocks: GS `volume`, MSFT `name`). Omitting unquotable fields is legitimate
-feed behavior — do **not** "fix" `servers/ws-server.js`; the fix is only the
-client-side guard.
-`src/helpers/formatHelpers.ts`, `formatCell` guard:
+Keep `document.getElementById(ROOT)` and the missing-container guard in
+`main.tsx`. The HTML element has `id="root"`; DOM ID lookup does not trim
+whitespace, so `'root '` returns `null`. Fix the constant rather than weakening
+the guard or changing the HTML to match the typo.
+
+## 0c. Undeclared React root
+
+**File:** `src/main.tsx`.
+
+Declare the variable before rendering:
+
+```tsx
+const appRoot = createRoot(container);
+```
+
+The existing `appRoot.render(...)` can stay. ES modules run in strict mode;
+assigning to an undeclared identifier throws a `ReferenceError`.
+
+## 1. Cells display the literal text "undefined"
+
+**File:** `src/helpers/formatHelpers.ts`, `formatCell`.
+
+Delete `value = normalizeCellValue(value);` and remove the now-unused
+`normalizeCellValue` helper and its comment. Keep the existing guard as the first
+statement in `formatCell`:
+
 ```ts
-// buggy
-if (value === null) {
-// fix — handle undefined too
-if (value === null || value === undefined) {
-```
-(The `String(value)` wrapper added in the `timestamp` branch can then go back
-to `Date.parse(value)`.)
-
-### 2. Malformed numeric filters match nothing
-`src/helpers/tableHelpers.ts`, `parseNumericFilter`:
-```ts
-// buggy — NaN is never == to anything, including NaN, so this never rejects
-if (operand == Number.NaN) return null;
-// fix
-if (Number.isNaN(operand)) return null;
-```
-
-### 3. Empty cells match text filters
-In-app repro relies on the sparse feed: on Stocks, the NAME filter `und`
-wrongly matches the MSFT row (its `name` is never sent).
-`src/helpers/tableHelpers.ts`, `matchesSubstring`:
-```ts
-// buggy — String(undefined) === 'undefined'
-return String(value).toLowerCase()...
-// fix
-return String(value ?? '').toLowerCase()...
-```
-
-### 4. Status bar crashes for a signed-out user
-`src/components/StatusBar/StatusBar.jsx`, `renderUserSection`:
-```js
-// buggy — the app passes null, not undefined
-if (user === undefined) {
-// fix — cover both null and undefined
-if (!user) {
-```
-
-### 5. `noReportText is not defined`
-`src/components/StatusBar/StatusBar.jsx`, `renderReportSection`:
-```jsx
-// buggy
-<span className={classes.placeholder}>{noReportText}</span>
-// fix
-<span className={classes.placeholder}>NO REPORT</span>
-```
-
-### 6. `nodeId is not defined` on EOD reports
-`src/containers/AppContainer/AppContainer.jsx`, `renderMain` REST branch:
-```jsx
-// buggy
-return <ReportContainer reportId={nodeId} />;
-// fix
-return <ReportContainer reportId={selectedNode.id} />;
-```
-
-### 7. `findNodeById` crashes
-`src/helpers/menuHelpers.js`:
-```js
-// buggy — leaf nodes have no children array
-const level2Children = level2.children;
-// fix — restore the guard
-const level2Children = Array.isArray(level2.children) ? level2.children : [];
-```
-and on the not-found path:
-```js
-// buggy
-return node;
-// fix
-return null;
-```
-
-### 8. Third menu level never renders
-`src/helpers/menuHelpers.js`, `flattenMenuForRender`: the level-3 emission
-loop was deleted (the dangling `if (!level2IsExpanded) continue;` is the
-leftover clue). Restore inside the level-2 loop, after that check:
-```js
-const level2Children = Array.isArray(level2.children) ? level2.children : [];
-
-// Level 3: always report leaves.
-for (let k = 0; k < level2Children.length; k += 1) {
-  rows.push({ node: level2Children[k], depth: 2, isExpanded: false, visible: true });
+if (value == null) {
+  return '';
 }
 ```
 
-### 9. Menu group clicks appear dead (mutation + reference equality)
-`src/store/menu/reducer.js`, `MENU_TOGGLE_NODE`: never mutate state; return a
-new object so reference checks can see the change:
-```js
-// buggy — mutates in place, returns the same reference
-state.expandedIds.push(nodeId); ... return state;
-// fix
-return {
-  ...state,
-  expandedIds: isExpanded
-    ? state.expandedIds.filter((id) => id !== nodeId)
-    : [...state.expandedIds, nodeId],
-};
-```
+The helper converts missing values into the string `'undefined'` before the
+guard can detect them. The loose null comparison intentionally covers both
+`null` and `undefined`. Leave all numeric and timestamp formatting below it.
+Also apply #17.
 
-### 10. Frontend-hardcoded menu data
-`src/store/menu/reducer.js`: seed the tree from the API payload again and
-delete `src/constants/menuData.js` (and its now-unused import):
-```js
-// buggy
-items: MENU_DATA,
-// fix
-const { menuData, userData } = action.payload;
-...
-items: menuData,
-```
+## 2. Malformed numeric filters reject every row
 
-### 11. `ThemeMode` bad type
-`src/styles/theme.ts`:
+**File:** `src/helpers/tableHelpers.ts`, `filterRows`.
+
+Delete this line:
+
 ```ts
-// buggy
-export type ThemeMode = string;
-...
-mode: mode as 'dark' | 'light',
-// fix
+if (hasNumericOperatorPrefix(text)) return false;
+```
+
+Remove the unused `hasNumericOperatorPrefix` helper too. Keep the existing
+numeric-parser branch and final `matchesSubstring(value, text)` call.
+`parseNumericFilter` already rejects invalid numeric operands; a rejected parse
+should reach substring matching instead of rejecting the row unconditionally.
+
+For example, a raw cell containing `>abc` should match the filter `>abc`, even
+in a numeric column. Ordinary numeric prices still will not contain that text,
+so an empty result for that filter on real prices alone does not prove the bug
+is present. Use the #2 verification test for a distinguishing example.
+
+## 3. Missing cells match text filters
+
+**File:** `src/helpers/tableHelpers.ts`, `filterRows`.
+
+Read the original cell value without substituting text:
+
+```ts
+const value = row[columnKey];
+```
+
+`matchesSubstring` already rejects nullish values. Converting a missing value
+to `'undefined'` earlier makes it incorrectly match filters such as `und`.
+
+## 4. Signed-out user crashes the status bar
+
+**File:** `src/components/StatusBar/StatusBar.jsx`, `renderUserSection`.
+
+Move the `userName` declaration below the existing null guard:
+
+```jsx
+const { classes, user } = this.props;
+if (user == null) {
+  return <span className={classes.placeholder}>NOT SIGNED IN</span>;
+}
+const userName = user.name;
+```
+
+Keep the existing signed-in JSX below this. A guard cannot protect a property
+access that has already happened.
+
+## 5. No selected report crashes the status bar
+
+**File:** `src/components/StatusBar/StatusBar.jsx`, `renderReportSection`.
+
+Replace the undeclared fallback identifier with the intended text:
+
+```jsx
+const emptyReportLabel = selectedReportLabel || 'NO REPORT';
+```
+
+The `||` expression evaluates its right side only when the selected label is
+falsy, which is why populated reports conceal the error.
+
+## 6. EOD reports crash
+
+**File:** `src/containers/AppContainer/AppContainer.jsx`, `renderMain`.
+
+Use the selected node that is already in scope:
+
+```jsx
+const restReportId = selectedNode.id;
+return <ReportContainer reportId={restReportId} />;
+```
+
+The earlier guard has already established that `selectedNode` is a report.
+`nodeId` is not declared. Verify by opening an EOD report such as Equities → ETFs.
+
+## 7. Menu lookup throws
+
+**File:** `src/helpers/menuHelpers.js`.
+
+There are two failure paths. In `findLevel3Node`, normalize absent children:
+
+```js
+const children = Array.isArray(parent.children) ? parent.children : [];
+```
+
+In `missingMenuNode`, return the documented miss value:
+
+```js
+function missingMenuNode() {
+  return null;
+}
+```
+
+A level-2 report leaf may have no `children`, and a failed lookup must not refer
+to an undeclared `node`. Keep the bounded traversal; recursion is unnecessary
+for the three-level menu contract. Verify both leaf traversal and an unknown ID.
+
+## 8. Third menu level is missing
+
+**File:** `src/helpers/menuHelpers.js`, `flattenMenuForRender`.
+
+Replace the final filtered return with:
+
+```js
+return rows;
+```
+
+The loops already emit level-3 leaves at depth 2 and already skip collapsed
+subtrees. The final `row.depth < 2` filter discards valid leaves. Expand
+Markets → FX and confirm FX Spot appears.
+
+## 9. Menu toggles do not update immediately
+
+**File:** `src/store/menu/reducer.js`.
+
+Replace the mutating helper with one that returns a new array:
+
+```js
+function toggleExpandedId(expandedIds, nodeId) {
+  return expandedIds.includes(nodeId)
+    ? expandedIds.filter((id) => id !== nodeId)
+    : [...expandedIds, nodeId];
+}
+```
+
+Update its comment to describe returning a new expansion list, and replace the
+reducer case with:
+
+```js
+case MENU_TOGGLE_NODE: {
+  return {
+    ...state,
+    expandedIds: toggleExpandedId(state.expandedIds, action.payload),
+  };
+}
+```
+
+Both the state object and changed array need fresh references. Mutating the
+array and returning the same state prevents reference-based subscriptions from
+observing the update. Pause live ticks and verify groups still toggle immediately.
+
+## 10. Backend menu changes are ignored
+
+**File:** `src/store/app/actions.js`, `appInitSuccess`.
+
+Forward the response unchanged:
+
+```js
+export const appInitSuccess = (initResponse) => ({
+  type: APP_INIT_SUCCESS,
+  payload: initResponse,
+});
+```
+
+Remove the unused `MENU_DATA` import from this file. The current menu reducer
+already reads `action.payload.menuData`; the action creator overwrites that
+field with the frontend copy. Verify a backend label change survives initialization.
+
+## 11. Theme mode accepts arbitrary strings
+
+**File:** `src/styles/theme.ts`.
+
+Replace `BuiltInThemeMode`, `ExtensionThemeMode`, and the current exported union
+with the direct declaration:
+
+```ts
 export type ThemeMode = 'dark' | 'light';
-...
-mode,   // no cast needed once the union is back
 ```
 
-### 12. Report table ignores the light theme
-`src/styles/components/ReportTable.styles.ts`: it imports the static dark
-`colors` object and uses it for surfaces. Remove
-`import { colors } from '../theme';` and change every `colors.*` back to
-`theme.colors.*` (root, filterCell, row hover, cell, footer). The theme
-object provided by the JSS `ThemeProvider` is what swaps per mode.
+The `string & {}` extension admits arbitrary strings and defeats the restriction.
+The direct union also matches the existing source-based verification test.
+Keep the intentional `@ts-expect-error` in that suite: it confirms invalid modes
+are rejected. Run the TypeScript build after resolving the other compile errors.
 
-### 13. Body cells paint over the sticky header
-`src/styles/components/ReportTable.styles.ts`, `headerCell` — restore:
+## 12. Report table ignores the light theme
+
+**File:** `src/styles/components/ReportTable.styles.ts`.
+
+Remove the `darkColors` import and `cachedTablePalette`. Simplify the style
+factory's parameter list to:
+
 ```ts
-zIndex: 2,
+const styles = (theme: JssTheme, tableColors = theme.colors) => ({
 ```
 
-### 14. Skeleton sidebar layout shift
-`src/styles/components/AppContainer.styles.js`, `skeletonSidebar` — restore:
+Keep the existing style rules and closing `});`. The current spread order
+overwrites every active color token with the cached dark palette. Using the
+active palette restores light backgrounds, text, borders, filters, and footer.
+Verify by toggling the theme with a report open.
+
+## 13. Flashing cells paint over the sticky header
+
+**File:** `src/styles/components/ReportTable.styles.ts`, `headerCell`.
+
+Remove `...inheritedTableLayer` from `headerCell` and delete the unused constant.
+Keep the existing `zIndex: 2`.
+
+The spread currently overwrites that value with zero. A positive header layer
+keeps it above animated body cells. Verify while scrolling a live table and
+watching recently updated rows pass beneath the header.
+
+## 14. Skeleton sidebar has the wrong outer width
+
+**File:** `src/styles/components/AppContainer.styles.js`, `skeletonSidebar`.
+
+Remove `...legacySkeletonBoxModel` and delete the unused constant. Keep the
+existing `boxSizing: 'border-box'` and width.
+
+The spread overrides border-box sizing with content-box sizing, making padding
+and borders add to the declared width. Reload and compare the loading layout
+with the loaded shell.
+
+## 15. Sidebar cursor floats away from the title
+
+**File:** `src/styles/components/SidebarContainer.styles.js`, `cursor`.
+
+Remove `...legacyDetachedCursor` and delete the unused constant. Keep the
+cursor's size, color, margin, and animation.
+
+The header already uses flex layout. Removing absolute positioning restores
+the cursor to normal flow after the title. Merely adding `position: relative`
+to the header does not restore that flow and does not satisfy the existing
+verification test.
+
+## 16. Status bar sections are misaligned
+
+**File:** `src/styles/components/StatusBar.styles.js`.
+
+Delete `legacyStatusLayout` and every reference to it: the spread in `root`,
+the spread in `section`, and the spread inside `section['&:last-child']`.
+Keep the existing styles, including `display: 'flex'`, `alignItems: 'center'`,
+and the final section's `marginRight: 0`. Add this to `root`:
+
 ```js
-boxSizing: 'border-box',
+justifyContent: 'space-between',
 ```
 
-### 15. Blinking cursor out of place
-`src/styles/components/SidebarContainer.styles.js`, `cursor` — remove
-`position: 'absolute'` (it's an inline-block element in normal flow).
+The legacy object switches the footer to block layout and floats its sections.
+Removing those overrides restores vertical alignment and distributes the three
+sections across the footer. Check the user, report, and clock at normal width.
 
-### 16. Status bar floats → flex
-`src/styles/components/StatusBar.styles.js` — replace the float layout:
-```js
-root: {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: theme.spacing.unit * 2,
-  height: 28,
-  ...            // (drop lineHeight/overflow:hidden clearfix; keep the rest)
-},
-section: {
-  display: 'flex',
-  alignItems: 'center',
-  gap: theme.spacing.unit,
-  minWidth: 0,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  // remove float, marginRight and the '&:last-child' override
-},
-```
+## 17. A test expects the broken formatting behavior
 
-### 17. Bad test
-`src/helpers/__tests__/formatHelpers.test.ts` — the assertion contradicts the
-test name and encodes bug #1:
+**File:** `src/helpers/__tests__/formatHelpers.test.ts`.
+
+In the parameterized null/undefined test, replace the undefined assertion with:
+
 ```ts
-// buggy
-expect(formatCell(undefined, type)).toBe('undefined');
-// fix
 expect(formatCell(undefined, type)).toBe('');
 ```
 
-## Verification — the fix-verification suite
+Keep the existing null assertion. Apply this with #1; tests should assert the
+documented empty display for missing values across all column types.
 
-`src/__tests__/bugFixes.test.tsx` has one test per bug (same numbering), each
-asserting the CORRECT behavior:
+## 18. Connected feed is labelled "Idle"
 
-```bash
-npx vitest run src/__tests__/bugFixes.test.tsx
+**File:** `src/components/LiveControls/LiveControls.jsx`.
+
+Add the missing binding in the existing constructor:
+
+```jsx
+constructor(props) {
+  super(props);
+  this.getStatusLabel = this.getStatusLabel.bind(this);
+}
 ```
 
-- **Buggy state:** nothing runs at all until the startup bugs are fixed —
-  bug 0a is a syntax error in `AppContainer.jsx`, so Vite shows its error
-  overlay, `npx vite build` fails, and every test file importing
-  `AppContainer` (including `bugFixes.test.tsx`) fails to *collect*. Fix 0a,
-  then 0b (blank page), and only then does the suite run: all 19 numbered
-  tests fail, and `npx tsc -b` fails with
-  `TS2578: Unused '@ts-expect-error' directive` in that file — the
-  compile-time half of the bug #11 check (`ThemeMode = string` makes the
-  suppression unnecessary).
-- **Fixed state:** all 19 pass, `tsc -b` is clean, and the whole run is
-  404/404 tests across 27 files. This was proven end-to-end: every fix above
-  was applied, everything ran green, then the bugs were re-planted. (The
-  startup fixes 0a/0b were additionally verified in the browser: overlay →
-  blank page → app boots with FX Spot streaming.)
+`render` extracts `getStatusLabel` from the instance and calls it as a standalone
+function. Without binding, that call loses `this`. The optional access
+`this?.props?.connectionStatus` then returns `undefined`, selecting the `Idle`
+fallback instead of throwing. Binding preserves the component receiver, so the
+text follows the same status as the dot. Keep the fallback for unknown statuses.
 
-While the bugs are in place, the pre-existing suite also fails 39 tests across
-8 files (menuHelpers, tableHelpers, menu reducer, TreeMenu, StatusBar,
-AppContainer, LiveReportContainer, initThunk), pointing at bugs 2–10.
-Bugs 1/17 (self-approving test), 11 (type) and 12–16 (styles) are only caught
-by `bugFixes.test.tsx`, review, or the browser.
+Verify with the existing LiveControls suite: connecting, open, closed, and error
+labels should all be correct, while pause/play behavior remains intact.
+
+## 19. URL-controlled HTML in the notice banner
+
+**File:** `src/components/UrlNotice/UrlNotice.jsx`.
+
+The source is the `notice` query parameter, controlled by whoever constructs
+the URL. `URLSearchParams` decodes it, and `dangerouslySetInnerHTML` passes it
+to an HTML parsing sink. This is a DOM-based XSS vulnerability: injected markup
+can include active content such as event-handler attributes. The bold-text demo
+demonstrates HTML injection without running a script.
+
+Replace the returned element with ordinary React text children:
+
+```jsx
+return (
+  <div className={className} role="note" data-testid="url-notice">
+    {notice}
+  </div>
+);
+```
+
+Keep the query parsing and absent-notice guard. React renders this string as
+text, so `<strong>INJECTED NOTICE</strong>` appears literally and creates no
+`strong` element. Do not manually HTML-escape the value before rendering it as
+a React child; that would double-encode the visible text.
+
+Candidate discussion points:
+
+- A link is untrusted input even if the frontend reads it without a backend.
+- URL encoding does not make HTML safe; query parsing decodes that encoding.
+- HTML injection can change the UI and can lead to JavaScript execution.
+  A `<script>` tag inserted through innerHTML is not a reliable execution demo;
+  lack of execution from that tag does not establish safety.
+- For this plain-text feature, remove the HTML sink. If a feature truly needs
+  rich HTML, use a maintained allowlist sanitizer suited to that context.
+  A hand-written regex or stripping only script tags is not a sound substitute.
+- CSP can add protection but does not replace fixing the unsafe rendering.
+
+The dedicated test asserts the safe behavior and intentionally fails while the
+bug is planted. It uses inert markup and does not execute an injected script.
+
+## Verification after applying the fixes
+
+Run these commands from the repository root:
+
+```sh
+npx vitest run src/__tests__/bugFixes.test.tsx
+npx vitest run src/components/LiveControls/__tests__/LiveControls.test.jsx
+npx vitest run src/components/UrlNotice/__tests__/UrlNotice.test.jsx
+npm test
+npm run build
+```
+
+The numbered suite covers #1–17. The LiveControls suite covers #18. The full
+suite checks surrounding behavior, and the build checks TypeScript and Vite.
+The UrlNotice suite checks literal rendering and the absent-parameter case for #19.
+These are verification instructions, not a claim that the still-buggy branch
+currently passes them.
+
+Finally run `npm run me` and open `http://localhost:3000`. Confirm startup,
+third-level navigation, EOD selection, immediate group toggling with ticks paused,
+theme changes, scrolling headers, and the connection label. Automated style
+checks inspect rule values; the browser checks confirm the visible result.
